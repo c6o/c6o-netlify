@@ -129,12 +129,13 @@ export const TeamConfiguration = () => {
           schema={teamSettingsSchema}
           onSubmit={teamSettingsMutation.mutateAsync}
         >
-          {({ context: { watch } }) => {
+          {({ context: { watch, setValue } }) => {
             const selectedOrgId = watch("selectedOrgId");
 
             useEffect(() => {
               if (selectedOrgId) {
                 handleOrgChange(selectedOrgId);
+                setValue("selectedSpaceId", "");
               }
             }, [selectedOrgId]);
 
