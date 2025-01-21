@@ -13,7 +13,7 @@ import { useNetlifySDK } from "@netlify/sdk/ui/react";
 import { trpc } from "../trpc";
 import { teamSettingsSchema } from "../../schema/team-configuration";
 import logoImg from "../../assets/netlify-logo.png";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Organization {
   id: string;
@@ -116,7 +116,6 @@ export const TeamConfiguration = () => {
         <CardTitle>Example Section for {sdk.extension.name}</CardTitle>
         <Form
           defaultValues={{
-            ...({userTokenSecret: console.log('NSX', teamSettingsQuery.data)}),
             ...teamSettingsQuery.data ?? {
               userTokenSecret: "",
               exampleString: "",
@@ -130,59 +129,68 @@ export const TeamConfiguration = () => {
           schema={teamSettingsSchema}
           onSubmit={teamSettingsMutation.mutateAsync}
         >
-          <FormFieldSecret
-            name="userTokenSecret"
-            label="User Token"
-            helpText="You can obtain this from Your Profile in the Codezero hub"
-          />
-          <Button 
-            onClick={(e) => {
-              e.preventDefault();
-              fetchOrganizations();
-            }}
-          >
-            Refresh Organizations
-          </Button>
-          
-          {organizations.length > 0 && (
-            <>
-              <Select
-                label="Select Organization"
-                name="selectedOrgId"
-                options={organizations.map(org => ({
-                  label: org.name,
-                  value: org.id
-                }))}
-                onChange={e => {
-                  handleOrgChange(e.target.value);
-                }}
-              />
-            </>
-          )}
+          {({ context: { watch } }) => {
+            const selectedOrgId = watch("selectedOrgId");
 
-          {spaces.length > 0 && (
-            <Select
-              label="Select Space"
-              name="selectedSpaceId"
-              options={spaces.map(space => ({
-                label: space.name,
-                value: space.id
-              }))}
-            />
-          )}
+            useEffect(() => {
+              if (selectedOrgId) {
+                handleOrgChange(selectedOrgId);
+              }
+            }, [selectedOrgId]);
 
-          <FormField
-            name="exampleString"
-            type="text"
-            label="Example String"
-            helpText="This is an example string"
-          />
-          <FormField
-            name="exampleNumber"
-            type="number"
-            label="Example Number"
-            helpText="This is an example number"
-          />
+            return (
+              <>
+                <FormFieldSecret
+                  name="userTokenSecret"
+                  label="User Token"
+                  helpText="You can obtain this from Your Profile in the Codezero hub"
+                />
+                <Button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    fetchOrganizations();
+                  }}
+                >
+                  Refresh Organizations
+                </Button>
+                
+                {organizations.length > 0 && (
+                  <Select
+                    label="Select Organization"
+                    name="selectedOrgId"
+                    options={organizations.map(org => ({
+                      label: org.name,
+                      value: org.id
+                    }))}
+                  />
+                )}
+
+                {spaces.length > 0 && (
+                  <Select
+                    label="Select Space"
+                    name="selectedSpaceId"
+                    options={spaces.map(space => ({
+                      label: space.name,
+                      value: space.id
+                    }))}
+                  />
+                )}
+
+                <FormField
+                  name="exampleString"
+                  type="text"
+                  label="Example String"
+                  helpText="This is an example string"
+                />
+                <FormField
+                  name="exampleNumber"
+                  type="number"
+                  label="Example Number"
+                  helpText="This is an example number"
+                />
+              </>
+            );
+          }}
         </Form>
       </Card>
     </TeamConfigurationSurface>
