@@ -118,10 +118,6 @@ export const TeamConfiguration = () => {
           defaultValues={{
             ...teamSettingsQuery.data ?? {
               userTokenSecret: "",
-              exampleString: "",
-              exampleSecret: "",
-              exampleBoolean: false,
-              exampleNumber: 123,
               selectedOrgId: "",
               selectedSpaceId: "",
             },
@@ -176,19 +172,6 @@ export const TeamConfiguration = () => {
                     }))}
                   />
                 )}
-
-                <FormField
-                  name="exampleString"
-                  type="text"
-                  label="Example String"
-                  helpText="This is an example string"
-                />
-                <FormField
-                  name="exampleNumber"
-                  type="number"
-                  label="Example Number"
-                  helpText="This is an example number"
-                />
               </>
             );
           }}
