@@ -5,8 +5,9 @@ import { NetlifyExtension } from "@netlify/sdk";
 const extension = new NetlifyExtension();
 
 extension.addFunctions("./src/functions", {
-  prefix: "my_unique_prefix",
+  prefix: "codezero-netlify",
   shouldInjectFunction: () => {
+    console.log('NSX')
     // If the function is not enabled, return early
     if (!process.env["C6O_NETLIFY_ENABLED"]) {
       return;
