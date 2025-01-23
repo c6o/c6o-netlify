@@ -1,10 +1,8 @@
 import {
-  Button,
   Card,
   CardLoader,
   CardTitle,
   Form,
-  FormField,
   FormFieldSecret,
   TeamConfigurationSurface,
   Select,
@@ -13,7 +11,7 @@ import { useNetlifySDK } from "@netlify/sdk/ui/react";
 import { trpc } from "../trpc";
 import { teamSettingsSchema } from "../../schema/team-configuration";
 import logoImg from "../../assets/netlify-logo.png";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface Organization {
   id: string;
@@ -38,10 +36,12 @@ export const TeamConfiguration = () => {
     },
   });
 
-  const fetchOrganizations = async () => {
-    const form = document.querySelector('form');
-    const formData = new FormData(form as HTMLFormElement);
-    const token = formData.get('userTokenSecret') as string;
+  const fetchOrganizations = async (token: string) => {
+    if (!token) {
+      console.log('Missing token')
+      return
+    }
+    
     try {
       const response = await fetch('https://hub.codezero.io/api/connect/hubapi.v1.APIService/ListOrgs', {
         method: 'POST',
@@ -60,21 +60,13 @@ export const TeamConfiguration = () => {
     }
   };
 
-  const handleOrgChange = async (orgId: string) => {
-    const form = document.querySelector('form');
-    const formData = new FormData(form as HTMLFormElement);
-    const token = formData.get('userTokenSecret') as string;
-
-    console.log('Token:', token);
-    console.log('OrgId:', orgId);
-
+  const handleOrgChange = async (token:string, orgId: string) => {
     if (!token || !orgId) {
       console.log('Missing token or orgId');
       return;
     }
 
     try {
-      console.log('Setting org...');
       // First set the org
       const setOrgResponse = await fetch('https://hub.codezero.io/api/connect/hubapi.v1.APIService/SetOrg', {
         method: 'POST',
@@ -87,6 +79,14 @@ export const TeamConfiguration = () => {
       console.log('SetOrg response:', await setOrgResponse.json());
 
       // Then fetch spaces
+      await fetchSpaces(token);
+      
+    } catch (error) {
+      console.error('Failed to fetch spaces:', error);
+    }
+  };
+
+  const fetchSpaces = async (token: string) => {
       console.log('Fetching spaces...');
       const spacesResponse = await fetch('https://hub.codezero.io/api/connect/hubapi.v1.APIService/ListSpaces', {
         method: 'POST',
@@ -96,14 +96,30 @@ export const TeamConfiguration = () => {
         },
         body: JSON.stringify({}),
       });
-      
       const spacesData = await spacesResponse.json();
-      console.log('Spaces data:', spacesData);
       setSpaces(spacesData.spaces || []);
+  }
+  
+  const handleSpaceChange = async (token: string, spaceId: string) => {
+    if (!token || !spaceId) {
+      console.log('Missing token or spaceId');
+      return;
+    }
+
+    try {
+      const setSpaceResponse = await fetch('https://hub.codezero.io/api/connect/hubapi.v1.APIService/SetSpace', {
+        method: 'POST',
+        headers: {
+          'Authorization': token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ space_id: spaceId }),
+      });
+      console.log('SetSpace response:', await setSpaceResponse.json());
     } catch (error) {
       console.error('Failed to fetch spaces:', error);
     }
-  };
+  }
 
   if (teamSettingsQuery.isLoading) {
     return <CardLoader />;
@@ -126,14 +142,51 @@ export const TeamConfiguration = () => {
           onSubmit={teamSettingsMutation.mutateAsync}
         >
           {({ context: { watch, setValue } }) => {
+            const userTokenSecret = watch("userTokenSecret");
             const selectedOrgId = watch("selectedOrgId");
+            const selectedSpaceId = watch("selectedSpaceId");
+
+            const prevValues = useRef<{
+              userTokenSecret: string;
+              selectedOrgId: string;
+              selectedSpaceId: string;
+            } | null>(null);
 
             useEffect(() => {
-              if (selectedOrgId) {
-                handleOrgChange(selectedOrgId);
+              // Initialize prevValues only once, after the query is loaded
+              if (!prevValues.current && teamSettingsQuery.data) {
+                prevValues.current = {
+                  ...teamSettingsQuery.data
+                };
+
+                // The initial load
+                if (prevValues.current.userTokenSecret)
+                  fetchOrganizations(userTokenSecret)
+                if (prevValues.current.userTokenSecret && prevValues.current. selectedOrgId)
+                  fetchSpaces(userTokenSecret)
+
+              }
+            }, [teamSettingsQuery.data]);
+
+            useEffect(() => {
+              if (!prevValues.current) return
+
+              if (selectedOrgId && prevValues.current.selectedOrgId !== selectedOrgId) {
+                handleOrgChange(userTokenSecret, selectedOrgId);
                 setValue("selectedSpaceId", "");
               }
-            }, [selectedOrgId]);
+
+              if (selectedSpaceId && prevValues.current.selectedSpaceId !== selectedSpaceId) {
+                handleSpaceChange(userTokenSecret, selectedSpaceId);
+              }
+
+              if (userTokenSecret && prevValues.current.userTokenSecret !== userTokenSecret) {
+                fetchOrganizations(userTokenSecret);
+              }
+
+              prevValues.current = { userTokenSecret, selectedOrgId, selectedSpaceId };
+
+            }, [userTokenSecret, selectedOrgId, selectedSpaceId]);
 
             return (
               <>
@@ -142,15 +195,6 @@ export const TeamConfiguration = () => {
                   label="User Token"
                   helpText="You can obtain this from Your Profile in the Codezero hub"
                 />
-                <Button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    fetchOrganizations();
-                  }}
-                >
-                  Refresh Organizations
-                </Button>
-                
                 {organizations.length > 0 && (
                   <Select
                     label="Select Organization"
