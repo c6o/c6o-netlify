@@ -10,7 +10,7 @@ import {
 import { useNetlifySDK } from "@netlify/sdk/ui/react";
 import { trpc } from "../trpc";
 import { teamSettingsSchema } from "../../schema/team-configuration";
-import logoImg from "../../assets/netlify-logo.png";
+import logoImg from "../../assets/codezero-logo.png";
 import { useState, useEffect, useRef } from "react";
 
 interface Organization {
