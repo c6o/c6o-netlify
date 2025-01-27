@@ -3,7 +3,7 @@ import type { Config, Context } from "@netlify/functions";
 
 
 export default async (req: Request, context: Context): Promise<Response> => {
-  return new Response ("Hello world<br/>" + context.url.toString() + "<br/>" + context.params.toString()) 
+  return new Response ("Hello world\n" + context.url.toString() + "\n" + JSON.stringify(context.params)) 
   //return new Response("Hello, world!");
 };
 
