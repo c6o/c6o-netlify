@@ -4,7 +4,7 @@ import { request as httpRequest } from "http";
 
 
 export const config: Config = {
-  path: ["/api/*", "/socket/*"],
+  path: ["/api", "/socket"],
 };
 
 export default async (req: Request, context: Context): Promise<Response> => {
