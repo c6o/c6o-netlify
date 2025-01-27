@@ -8,7 +8,7 @@ import { trpc } from "../ui/trpc";
 export default async () => {
   const teamSettingsQuery = trpc.teamSettings.query.useQuery();
   await teamSettingsQuery.isLoading
-  return new Response (JSON.stringify(teamSettingsQuery.data)) 
+  return new Response ("Hello world" + JSON.stringify(teamSettingsQuery.data)) 
   return new Response("Hello, world!");
 };
 
