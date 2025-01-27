@@ -9,6 +9,7 @@ export const config: Config = {
 
 export default async (req: Request, context: Context): Promise<Response> => {
   // Determine target based on path
+  console.log('Receioved request for', req.url)
   const isSocketRequest = req.url.includes('/socket');
   const targetHost = isSocketRequest 
     ? "sample-project-socket.sample-project.svc.cluster.local"
