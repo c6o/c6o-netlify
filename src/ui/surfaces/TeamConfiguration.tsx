@@ -10,7 +10,6 @@ import {
 import { useNetlifySDK } from "@netlify/sdk/ui/react";
 import { trpc } from "../trpc";
 import { teamSettingsSchema } from "../../schema/team-configuration";
-import logoImg from "../../assets/codezero-logo.png";
 import { useState, useEffect, useRef } from "react";
 
 interface Organization {
@@ -128,8 +127,7 @@ export const TeamConfiguration = () => {
   return (
     <TeamConfigurationSurface>
       <Card>
-        <img src={logoImg} />
-        <CardTitle>Example Section for {sdk.extension.name}</CardTitle>
+        <CardTitle>Configuration for {sdk.extension.name}</CardTitle>
         <Form
           defaultValues={{
             ...teamSettingsQuery.data ?? {
@@ -169,18 +167,16 @@ export const TeamConfiguration = () => {
             }, [teamSettingsQuery.data]);
 
             useEffect(() => {
-              if (!prevValues.current) return
-
-              if (selectedOrgId && prevValues.current.selectedOrgId !== selectedOrgId) {
+              if (selectedOrgId && prevValues.current?.selectedOrgId !== selectedOrgId) {
                 handleOrgChange(userTokenSecret, selectedOrgId);
                 setValue("selectedSpaceId", "");
               }
 
-              if (selectedSpaceId && prevValues.current.selectedSpaceId !== selectedSpaceId) {
+              if (selectedSpaceId && prevValues.current?.selectedSpaceId !== selectedSpaceId) {
                 handleSpaceChange(userTokenSecret, selectedSpaceId);
               }
 
-              if (userTokenSecret && prevValues.current.userTokenSecret !== userTokenSecret) {
+              if (userTokenSecret && prevValues.current?.userTokenSecret !== userTokenSecret) {
                 fetchOrganizations(userTokenSecret);
               }
 
