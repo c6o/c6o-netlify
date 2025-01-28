@@ -6,14 +6,18 @@ const extension = new NetlifyExtension();
 
 extension.addFunctions("./src/functions", {
   prefix: "lm0he2wq-codezero-extension",
-  shouldInjectFunction: () => {
-    console.log('NSX')
+  shouldInjectFunction: (x, y, z) => {
+    console.log("NSX should", x, y, z)
     // If the function is not enabled, return early
     //if (!process.env["C6O_NETLIFY_ENABLED"]) {
     //  return;
     //}
     return true;
   },
+});
+
+extension.addBuildEventHandler('onPreBuild', async (x, y, z) => {
+  console.log("NSX", x, y, z)
 });
 
 export { extension };
