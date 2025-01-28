@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@netlify/functions": "^3.0.0",
-    "@netlify/sdk": "^2.19.0",
+    "@netlify/sdk": "^2.20.2",
     "@tanstack/react-query": "^5.64.2",
     "@trpc/client": "^11.0.0-rc.477",
     "@trpc/react-query": "^11.0.0-rc.477",

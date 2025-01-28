@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { procedure, router } from "./trpc.js";
-import { teamSettingsSchema } from "../schema/team-configuration.js";
-
+import { teamSettingsSchema, TeamSettings, SiteSettings, ConnectSettings } from "../schema/team-configuration.js";
+import { NetlifyExtensionClient, z } from "@netlify/sdk";
 
 export const appRouter = router({
   teamSettings: {
@@ -55,7 +55,75 @@ export const appRouter = router({
         }
       }),
   },
+
+
+  siteSettings: {
+    read: procedure.query(async ({ ctx: { teamId, siteId, client: c } }) => {
+      try {
+        const client = c as ShowcaseNetlifyClient;
+        if (!teamId || !siteId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "teamId and siteId and required",
+          });
+        }
+        return (await client.getSiteConfiguration(teamId, siteId))?.config;
+      } catch (e) {
+        throw maskInternalErrors(e as Error);
+      }
+    }),
+    update: procedure
+      .input(SiteSettings.strict())
+      .mutation(async ({ ctx: { teamId, siteId, client: c }, input }) => {
+        try {
+          const client = c as ShowcaseNetlifyClient;
+          if (!teamId || !siteId) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "teamId and siteId and required",
+            });
+          }
+          const config = (await client.getSiteConfiguration(teamId, siteId))
+            ?.config;
+          const newConfig = {
+            ...config,
+            ...input,
+          };
+          if (config) {
+            await client.updateSiteConfiguration(teamId, siteId, newConfig);
+          } else {
+            await client.createSiteConfiguration(teamId, siteId, newConfig);
+          }
+          await client.createOrUpdateVariables({
+            accountId: teamId,
+            siteId,
+            variables: {
+              SHOWCASE_ENABLED: newConfig.enabled ? "1" : "0",
+            },
+          });
+        } catch (e) {
+          throw maskInternalErrors(e as Error);
+        }
+      }),
+  },
   
 });
 
+function maskInternalErrors(e: Error) {
+  if (e instanceof TRPCError) {
+    return e;
+  }
+  return new TRPCError({
+    code: "INTERNAL_SERVER_ERROR",
+    message: "Internal server error",
+    cause: e,
+  });
+}
+
 export type AppRouter = typeof appRouter;
+
+export type ShowcaseNetlifyClient = NetlifyExtensionClient<
+  SiteSettings,
+  TeamSettings,
+  ConnectSettings
+>;
