@@ -160,7 +160,7 @@ export const TeamConfiguration = () => {
                 // The initial load
                 if (prevValues.current.userTokenSecret)
                   fetchOrganizations(userTokenSecret)
-                if (prevValues.current.userTokenSecret && prevValues.current. selectedOrgId)
+                if (prevValues.current.userTokenSecret && prevValues.current.selectedOrgId)
                   fetchSpaces(userTokenSecret)
 
               }
