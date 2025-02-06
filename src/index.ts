@@ -1,7 +1,6 @@
 // Documentation: https://sdk.netlify.com/docs
 import { NetlifyExtension } from "@netlify/sdk";
 
-
 const extension = new NetlifyExtension();
 
 extension.addFunctions("./src/functions", {
@@ -16,8 +15,9 @@ extension.addFunctions("./src/functions", {
   },
 });
 
-extension.addBuildEventHandler('onPreBuild', async (x, y, z) => {
-  console.log("NSX", x, y, z)
+extension.addBuildEventHandler('onPreBuild', async (x) => {
+
+  console.log("NSX", x.constants)
 });
 
 export { extension };

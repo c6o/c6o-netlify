@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { procedure, router } from "./trpc.js";
-import { teamSettingsSchema, TeamSettings, SiteSettings, ConnectSettings } from "../schema/team-configuration.js";
+import { teamSettingsSchema, SiteSettingsSchema } from "../schema/team-configuration.js";
+import type { TeamSettings, SiteSettings, ConnectSettings } from "../schema/team-configuration.js";
 import { NetlifyExtensionClient, z } from "@netlify/sdk";
 
 export const appRouter = router({
@@ -73,7 +74,7 @@ export const appRouter = router({
       }
     }),
     update: procedure
-      .input(SiteSettings.strict())
+      .input(SiteSettingsSchema.strict())
       .mutation(async ({ ctx: { teamId, siteId, client: c }, input }) => {
         try {
           const client = c as ShowcaseNetlifyClient;
@@ -102,6 +103,7 @@ export const appRouter = router({
             },
           });
         } catch (e) {
+          console.log('NSX ERROR', e)
           throw maskInternalErrors(e as Error);
         }
       }),
