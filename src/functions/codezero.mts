@@ -37,7 +37,6 @@ export default async (req: Request, context: Context): Promise<Response> => {
 
   const target = req.headers.get('x-c6o-target')
   console.log('Received target', target)
-  console.log('Using space', spaceCredentials)
   if (!target)
     return new Response(undefined, {
       status: 400,
@@ -50,7 +49,7 @@ export default async (req: Request, context: Context): Promise<Response> => {
       hostname: spaceCredentials.host,
       port: 8800,
       method: 'CONNECT',
-      cert: spaceCredentials.cert,
+      ca: spaceCredentials.cert,
       path: `${targetURL.host}:${targetURL.port}`,
       headers: {
         'Proxy-Authorization': spaceCredentials.token,
