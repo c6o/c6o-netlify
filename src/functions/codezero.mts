@@ -46,7 +46,8 @@ export default async (req: Request, context: Context): Promise<Response> => {
       statusText: 'Missing required x-c6o-target header'
     }) 
   const targetURL = new URL(target)
-  console.log('Target url is', targetURL)
+  console.log('Proxy is', spaceCredentials.host)
+  console.log('Target is', targetURL)
 
   return new Promise((resolve) => {
     const proxyReq = request({
