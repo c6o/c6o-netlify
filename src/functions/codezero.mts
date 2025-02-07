@@ -50,18 +50,20 @@ export default async (req: Request, context: Context): Promise<Response> => {
   console.log('Target is', targetURL)
 
   return new Promise((resolve) => {
-    const proxyReq = request({
+    const proxyOptions = {
       hostname: spaceCredentials.host,
       port: 8800,
       method: 'CONNECT',
       // ca: spaceCredentials.cert,
       rejectUnauthorized: false,
-      path: `${targetURL.host}:${targetURL.port || '80'}`, // Add default port
+      path: targetURL.host, // Add default port
       headers: {
         'Proxy-Authorization': spaceCredentials.token,
         'x-c6o-variant': '',
       },
-    })
+    }
+    console.log('Using proxy', proxyOptions)
+    const proxyReq = request(proxyOptions)
 
     proxyReq.on('connect', (res, socket, head) => {
       console.log('HTTP CONNECT successful with status:', res.statusCode)
@@ -87,7 +89,7 @@ export default async (req: Request, context: Context): Promise<Response> => {
         method: req.method,
         headers: {
           ...Object.fromEntries(req.headers),
-          host: targetURL.host // Ensure host header is set correctly
+          host: targetURL.hostname // Ensure host header is set correctly
         },
         hostname: targetURL.hostname,
         port: targetURL.port || '80',
