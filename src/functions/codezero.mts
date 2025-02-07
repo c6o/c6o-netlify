@@ -49,7 +49,7 @@ export default async (req: Request, context: Context): Promise<Response> => {
       hostname: spaceCredentials.host,
       port: 8800,
       method: 'CONNECT',
-      ca: spaceCredentials.cert,
+      ca: spaceCredentials.cert.replace(/\\r\\n/g, '\n'),
       path: `${targetURL.host}:${targetURL.port}`,
       headers: {
         'Proxy-Authorization': spaceCredentials.token,
