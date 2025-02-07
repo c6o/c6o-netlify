@@ -1,4 +1,5 @@
 import type { Config, Context } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 import { request } from 'https';
 import { request as httpRequest } from 'http';
 import { hubURL } from '../server/hub'
@@ -13,30 +14,43 @@ interface SpaceCredentials {
   cert: string
 }
 
-let spaceCredentials: SpaceCredentials
+const blobStoreKey = 'codezero-teampsace-config'
 
 const getSpaceCredentials = async () => {
-    const spaceResponse = await fetch(`${hubURL}/api/c6o/connect/c6oapi.v1.C6OService/GetSpaceConnection`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `${process.env.CZ_ORG_ID}:${process.env.CZ_ORG_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        spaceId: process.env.CZ_SPACE_ID
-      }),
-    })
-    const credentials = await spaceResponse.json() as SpaceCredentials
-    // Fix certificate formatting
-    credentials.cert = credentials.cert.replace(/\\r\\n/g, '\n')
-    return credentials
+  // Get the store for space credentials
+  const store = getStore(blobStoreKey)
+  
+  // Try to get existing credentials
+  const existingCreds = await store.get('current', { type: 'json' }) as SpaceCredentials | null
+  
+  if (existingCreds)
+    return existingCreds
+
+  // If no credentials exist, fetch new ones
+  const spaceResponse = await fetch(`${hubURL}/api/c6o/connect/c6oapi.v1.C6OService/GetSpaceConnection`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `${process.env.CZ_ORG_ID}:${process.env.CZ_ORG_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      spaceId: process.env.CZ_SPACE_ID
+    }),
+  })
+  const credentials = await spaceResponse.json() as SpaceCredentials
+  // Fix certificate formatting
+  credentials.cert = credentials.cert.replace(/\\r\\n/g, '\n')
+  
+  // Store the credentials
+  await store.setJSON('current', credentials)
+  
+  return credentials
 }
 
 export default async (req: Request, context: Context): Promise<Response> => {
   console.log('Received request for', req.url)
 
-  if (!spaceCredentials)
-    spaceCredentials = await getSpaceCredentials()
+  const spaceCredentials = await getSpaceCredentials();
 
   const target = req.headers.get('x-c6o-target')
   console.log('Received target', target)
@@ -67,6 +81,12 @@ export default async (req: Request, context: Context): Promise<Response> => {
 
     proxyReq.on('connect', (res, socket, head) => {
       console.log('HTTP CONNECT successful with status:', res.statusCode)
+      
+      if (res.statusCode === 407) {
+        const store = getStore(blobStoreKey)
+        store.delete('current')
+        return
+      }
 
       if (res.statusCode !== 200) {
         resolve(

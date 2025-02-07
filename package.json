@@ -10,6 +10,7 @@
     "dev-connector": "netlify-extension dev --connector"
   },
   "dependencies": {
+    "@netlify/blobs": "^8.1.0",
     "@netlify/functions": "^3.0.0",
     "@netlify/sdk": "^2.20.2",
     "@tanstack/react-query": "^5.64.2",
