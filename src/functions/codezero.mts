@@ -23,9 +23,12 @@ const getSpaceCredentials = async () => {
   // Try to get existing credentials
   const existingCreds = await store.get('current', { type: 'json' }) as SpaceCredentials | null
   
-  if (existingCreds)
+  if (existingCreds) {
+    console.log('Codezero teamspace credentials cache hit')
     return existingCreds
+  }
 
+  console.log('Codezero teamspace credentials cache miss')
   // If no credentials exist, fetch new ones
   const spaceResponse = await fetch(`${hubURL}/api/c6o/connect/c6oapi.v1.C6OService/GetSpaceConnection`, {
     method: 'POST',
@@ -83,6 +86,7 @@ export default async (req: Request, context: Context): Promise<Response> => {
       console.log('HTTP CONNECT successful with status:', res.statusCode)
       
       if (res.statusCode === 407) {
+        console.log('Codezero teamspace credentials failed')
         const store = getStore(blobStoreKey)
         store.delete('current')
         return
