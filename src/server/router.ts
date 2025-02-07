@@ -99,8 +99,22 @@ export const appRouter = router({
             accountId: teamId,
             siteId,
             variables: {
-              SHOWCASE_ENABLED: newConfig.enabled ? "1" : "0",
+              CZ_ORG_ID: newConfig.orgID,
+              CZ_SPACE_ID: newConfig.spaceID,
             },
+          });
+          await client.createOrUpdateVariable({
+            accountId: teamId,
+            siteId,
+            key: 'CZ_ORG_API_KEY',
+            value: {
+              dev: "",
+              production: newConfig.orgAPIKey,
+              deployPreview: newConfig.orgAPIKey,
+              branchDeploys: newConfig.orgAPIKey,
+            },
+            scopes: ['functions', 'builds', 'runtime'],
+            isSecret: true
           });
         } catch (e) {
           console.log('NSX ERROR', e)
