@@ -49,7 +49,7 @@ export default async (req: Request, context: Context): Promise<Response> => {
 
   return new Promise((resolve) => {
     const proxyReq = request({
-      protocol: 'https',
+      protocol: 'https:',
       hostname: spaceCredentials.host,
       port: 8800,
       method: 'CONNECT',
