@@ -46,21 +46,21 @@ export default async (req: Request, context: Context): Promise<Response> => {
       statusText: 'Missing required x-c6o-target header'
     }) 
   const targetURL = new URL(target)
+  console.log('Target url is', targetURL)
 
   return new Promise((resolve) => {
     const proxyReq = request({
-      protocol: 'https:',
       hostname: spaceCredentials.host,
       port: 8800,
       method: 'CONNECT',
-      ca: spaceCredentials.cert,
+      // ca: spaceCredentials.cert,
       rejectUnauthorized: false,
       path: `${targetURL.host}:${targetURL.port || '80'}`, // Add default port
       headers: {
         'Proxy-Authorization': spaceCredentials.token,
         'x-c6o-variant': '',
       },
-    });
+    })
 
     proxyReq.on('connect', (res, socket, head) => {
       console.log('HTTP CONNECT successful with status:', res.statusCode)
