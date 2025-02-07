@@ -26,7 +26,10 @@ const getSpaceCredentials = async () => {
         spaceId: process.env.CZ_SPACE_ID
       }),
     })
-    return await spaceResponse.json() as SpaceCredentials
+    const credentials = await spaceResponse.json() as SpaceCredentials
+    // Fix certificate formatting
+    credentials.cert = credentials.cert.replace(/\\r\\n/g, '\n')
+    return credentials
 }
 
 export default async (req: Request, context: Context): Promise<Response> => {
@@ -49,9 +52,9 @@ export default async (req: Request, context: Context): Promise<Response> => {
       hostname: spaceCredentials.host,
       port: 8800,
       method: 'CONNECT',
-      ca: spaceCredentials.cert.replace(/\\r\\n/g, '\n'),
+      ca: spaceCredentials.cert,
       rejectUnauthorized: false,
-      path: `${targetURL.host}:${targetURL.port}`,
+      path: `${targetURL.host}:${targetURL.port || '80'}`, // Add default port
       headers: {
         'Proxy-Authorization': spaceCredentials.token,
         'x-c6o-variant': '',
@@ -78,13 +81,15 @@ export default async (req: Request, context: Context): Promise<Response> => {
 
       // Use the existing socket to send the HTTP request to the target server
       const targetOptions = {
-        createConnection: () => socket, // Use the connected proxy socket
+        createConnection: () => socket,
         method: req.method,
-        headers: Object.fromEntries(req.headers), // Forward headers from the original request
-        body: req.body,
-        hostname: targetURL.host,
-        port: targetURL.port,
-        path: targetURL.pathname, // Ensure the correct path is used
+        headers: {
+          ...Object.fromEntries(req.headers),
+          host: targetURL.host // Ensure host header is set correctly
+        },
+        hostname: targetURL.hostname,
+        port: targetURL.port || '80',
+        path: targetURL.pathname + targetURL.search, // Include query parameters
       }
 
       const targetReq = httpRequest(targetOptions, (targetRes) => {
