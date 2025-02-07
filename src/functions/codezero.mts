@@ -36,6 +36,8 @@ export default async (req: Request, context: Context): Promise<Response> => {
     spaceCredentials = await getSpaceCredentials()
 
   const target = req.headers.get('x-c6o-target')
+  console.log('Received target', target)
+  console.log('Using space', spaceCredentials)
   if (!target)
     return new Response(undefined, {
       status: 400,
