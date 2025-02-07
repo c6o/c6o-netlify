@@ -14,14 +14,15 @@ interface SpaceCredentials {
   cert: string
 }
 
-const blobStoreKey = 'codezero-teampsace-config'
+const blobStoreKey = 'codezero-teamspace'
+const blobFilename = 'cache'
 
 const getSpaceCredentials = async () => {
   // Get the store for space credentials
   const store = getStore(blobStoreKey)
   
   // Try to get existing credentials
-  const existingCreds = await store.get('current', { type: 'json' }) as SpaceCredentials | null
+  const existingCreds = await store.get(blobFilename, { type: 'json' }) as SpaceCredentials | null
   
   if (existingCreds) {
     console.log('Codezero teamspace credentials cache hit')
@@ -45,7 +46,7 @@ const getSpaceCredentials = async () => {
   credentials.cert = credentials.cert.replace(/\\r\\n/g, '\n')
   
   // Store the credentials
-  await store.setJSON('current', credentials)
+  await store.setJSON(blobFilename, credentials)
   
   return credentials
 }
@@ -63,8 +64,8 @@ export default async (req: Request, context: Context): Promise<Response> => {
       statusText: 'Missing required x-c6o-target header'
     }) 
   const targetURL = new URL(target)
-  console.log('Proxy is', spaceCredentials.host)
-  console.log('Target is', targetURL)
+  console.log('Teamspace is', spaceCredentials.host)
+  console.log('Service is', targetURL)
 
   return new Promise((resolve) => {
     const proxyOptions = {
@@ -79,7 +80,7 @@ export default async (req: Request, context: Context): Promise<Response> => {
         'x-c6o-variant': '',
       },
     }
-    console.log('Using proxy', proxyOptions)
+    // console.log('Using proxy', proxyOptions)
     const proxyReq = request(proxyOptions)
 
     proxyReq.on('connect', (res, socket, head) => {
@@ -88,7 +89,7 @@ export default async (req: Request, context: Context): Promise<Response> => {
       if (res.statusCode === 407) {
         console.log('Codezero teamspace credentials failed')
         const store = getStore(blobStoreKey)
-        store.delete('current')
+        store.delete(blobFilename)
         return
       }
 
