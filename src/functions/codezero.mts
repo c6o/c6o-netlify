@@ -72,8 +72,8 @@ export default async (req: Request, context: Context): Promise<Response> => {
       hostname: spaceCredentials.host,
       port: 8800,
       method: 'CONNECT',
-      // ca: spaceCredentials.cert,
-      rejectUnauthorized: false,
+      ca: spaceCredentials.cert,
+      servername: process.env.CZ_SPACE_ID + '.spaces.codezero.io',
       path: targetURL.host, // Add default port
       headers: {
         'Proxy-Authorization': spaceCredentials.token,
