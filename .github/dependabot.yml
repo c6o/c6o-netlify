@@ -15,4 +15,4 @@ updates:
         - "@trpc/*"
         update-types:
         - "minor"
-        - "patch
+        - "patch"
