@@ -1,20 +1,19 @@
-# Netlify Extension
+# Codezero Zero Trust Extension for Netlify
 
-This extension is created using the [Netlify SDK](https://sdk.netlify.com/get-started/introduction/). It is a boilerplate for creating a new extension.
+An extension that lets you use connect to your [Codezero](https://codezero.io) Teamspace.
 
-## Scripts
+After installing the extension, you'll need to configure it:
 
-These are some common scripts you will use when developing your extension. If you want to know what else is possible, [check out the documentation](https://developers.netlify.com/sdk/netlify-sdk-utility-tools-reference/).
+1. In the Netlify app, navigate to the site you want to give access to your Codezero Teamspace
+2. Under _Extensions_, click on _Codezero Zero Trust Extension_
+3. Copy your Organization ID and Organization API Key from the [Codezero Hub](https://hub.codezero.io/api-keys)
+4. Select the Teamspace and click on _Save_
+5. Trigger a new production deploy of your site
 
-### Build
+After the deployment, you can now make requests to your Teamspace like this:
 
-This builds the extension into a `.ntli` folder. This is the folder that Netlify uses to run the extension.
-
-```bash
-npm run build
+```js
+const response = await fetch('/.netlify/functions/codezero_proxy', {
+    headers: { 'x-c6o-target': 'http://service-a.namespace:8080' }
+})
 ```
-
-
-## Publish
-
-Are you ready to deploy and publish your extension? Check out our documentation on [publishing your extension](https://developers.netlify.com/sdk/publish/).
