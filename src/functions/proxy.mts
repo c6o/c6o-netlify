@@ -5,7 +5,6 @@ import { request as httpRequest } from 'http';
 import { hubURL } from '../server/hub.js'
 
 export const config: Config = {
-  path: '/.codezero',
 };
 
 interface SpaceCredentials {
