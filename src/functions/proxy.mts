@@ -161,11 +161,10 @@ export default async (req: Request, context: Context): Promise<Response> => {
 
       if (req.body) {
         console.log('Piping request body to target server...')
-        req.body.pipe(targetReq)
-      } else {
-        console.log('No request body. Ending target request...')
-        targetReq.end()
+        targetReq.write(req.body)
       }
+
+      targetReq.end();
     })
 
     proxyReq.on('error', (err) => {
