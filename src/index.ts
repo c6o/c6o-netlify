@@ -4,7 +4,7 @@ import { NetlifyExtension } from "@netlify/sdk";
 const extension = new NetlifyExtension();
 
 extension.addFunctions("./src/functions", {
-  prefix: "lm0he2wq-codezero-extension",
+  prefix: "codezero",
   shouldInjectFunction: ({ name }) => {
     return !!process.env.CZ_SPACE_ID;
   },
