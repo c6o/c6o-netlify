@@ -162,7 +162,7 @@ export default async (req: Request, context: Context): Promise<Response> => {
       if (req.body) {
         console.log('Piping request body to target server...')
         req.arrayBuffer().then((buffer) => {
-          targetReq.write(buffer);
+            targetReq.write(Buffer.from(buffer));
           targetReq.end();
         })
       } else {
