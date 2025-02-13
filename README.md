@@ -17,7 +17,7 @@ import fetch from "node-fetch";
 import { CodezeroAgent } from "@c6o/codezero-agent";
 
 const agent = new CodezeroAgent();
-const response = await fetch("http://my-service.namespace/path", { agent });)
+const response = await fetch("http://my-service.namespace/path", { agent });
 ```
 
 ## Example
