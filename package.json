@@ -14,7 +14,7 @@
     "@netlify/functions": "^3.0.0",
     "@netlify/sdk": "^2.23.4",
     "@tanstack/react-query": "^5.66.9",
-    "@trpc/client": "^11.0.0-rc.808",
+    "@trpc/client": "^11.0.0-rc.828",
     "@trpc/react-query": "^11.0.0-rc.808",
     "@trpc/server": "^11.0.0-rc.808",
     "react": "^19.0.0",
