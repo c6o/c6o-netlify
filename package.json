@@ -10,30 +10,30 @@
     "dev-connector": "netlify-extension dev --connector"
   },
   "dependencies": {
-    "@netlify/blobs": "^8.1.0",
-    "@netlify/functions": "^3.0.0",
-    "@netlify/sdk": "^2.23.4",
-    "@tanstack/react-query": "^5.66.9",
-    "@trpc/client": "^11.0.1",
-    "@trpc/react-query": "^11.0.1",
-    "@trpc/server": "^11.0.0-rc.808",
-    "react": "^19.0.0",
+    "@netlify/blobs": "^9.1.3",
+    "@netlify/functions": "^4.0.0",
+    "@netlify/sdk": "^2.26.2",
+    "@tanstack/react-query": "^5.77.2",
+    "@trpc/client": "^11.1.4",
+    "@trpc/react-query": "^11.1.4",
+    "@trpc/server": "^11.1.4",
+    "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "zod": "^3.24.1"
+    "zod": "^3.25.34"
   },
   "devDependencies": {
-    "@netlify/netlify-plugin-netlify-extension": "^1.0.3",
+    "@netlify/netlify-plugin-netlify-extension": "^1.2.2",
     "@tsconfig/node18": "^18.2.4",
     "@tsconfig/recommended": "^1.0.8",
     "@tsconfig/strictest": "^2.0.5",
     "@tsconfig/vite-react": "^3.4.0",
-    "@types/react": "^19.0.7",
-    "@types/react-dom": "^19.1.1",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^4.5.0",
     "autoprefixer": "^10.4.20",
-    "netlify-cli": "^19.0.0",
+    "netlify-cli": "^21.5.0",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.3",
+    "typescript": "^5.8.3",
     "vite": "^6.3.5"
   }
 }
