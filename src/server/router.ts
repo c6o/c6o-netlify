@@ -107,7 +107,12 @@ export const appRouter = router({
             accountId: teamId,
             siteId,
             key: 'CZ_ORG_API_KEY',
-            value: newConfig.orgAPIKey,
+            value: {
+              dev: newConfig.orgAPIKey,
+              production: newConfig.orgAPIKey,
+              deployPreview: newConfig.orgAPIKey,
+              branchDeploys: newConfig.orgAPIKey,
+            },
             scopes: ['functions', 'builds', 'runtime'],
             isSecret: true
           });
