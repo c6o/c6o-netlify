@@ -3,25 +3,35 @@ import {
   CardLoader,
   CardTitle,
   Form,
-  FormField,
   FormFieldSecret,
   SiteConfigurationSurface,
   Select,
+  ProviderAuthCard,
 } from "@netlify/sdk/ui/react/components";
 import { useNetlifySDK } from "@netlify/sdk/ui/react";
-import { hubURL } from '../../server/hub'
+import { hubURL } from "../../server/hub";
 import { trpc } from "../trpc";
 import { SiteSettingsSchema } from "../../schema/team-configuration";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+
+enum TokenState {
+  NotSet = "not_set",
+  Valid = "valid",
+  Invalid = "invalid",
+  Expired = "expired",
+}
 
 interface Space {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 export const SiteConfiguration = () => {
   const sdk = useNetlifySDK();
+  const { providerToken } = sdk.context.auth;
 
   const trpcUtils = trpc.useUtils();
+  const [tokenState, setTokenState] = useState(TokenState.NotSet);
+  const [orgs, setOrgs] = useState<{ id: string; name: string }[]>([]);
   const [spaces, setSpaces] = useState<Space[]>([]);
   const siteSettingsQuery = trpc.siteSettings.read.useQuery();
   const siteSettingsMutation = trpc.siteSettings.update.useMutation({
@@ -29,96 +39,135 @@ export const SiteConfiguration = () => {
       await trpcUtils.siteSettings.read.invalidate();
     },
   });
+  useEffect(() => {
+    if (!providerToken) {
+      setTokenState(TokenState.NotSet);
+      return;
+    }
 
-  const fetchSpaces = async (orgID: string, orgAPIKey: string) => {
-      const spacesResponse = await fetch(`${hubURL}/api/c6o/connect/c6oapi.v1.C6OService/ListSpaces`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `${orgID}:${orgAPIKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}),
-      });
+    // Check if JWT is expired
+    try {
+      const payload = JSON.parse(atob(providerToken.split(".")[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (payload.exp < currentTime) {
+        setTokenState(TokenState.Expired);
+        return;
+      }
+    } catch {
+      setTokenState(TokenState.Invalid);
+      return;
+    }
+
+    setTokenState(TokenState.Valid);
+  }, [providerToken]);
+
+  useEffect(() => {
+    if (tokenState !== TokenState.Valid) {
+      setOrgs([]);
+      setSpaces([]);
+      return;
+    }
+
+    const fetchOrgs = async () => {
+      const orgsResponse = await fetch(
+        `${hubURL}/api/admin/connect/hubadminapi.v1.HubAdminService/ListOrgs`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${providerToken}`,
+            "Content-Type": "application/json",
+          },
+          body: "{}",
+        }
+      );
+      const orgData = await orgsResponse.json();
+      setOrgs(orgData.orgs || []);
+    };
+    fetchOrgs();
+
+    const fetchSpaces = async () => {
+      const spacesResponse = await fetch(
+        `${hubURL}/api/admin/connect/hubadminapi.v1.HubAdminService/ListTeamspaces`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${providerToken}`,
+            "Content-Type": "application/json",
+          },
+          body: "{}",
+        }
+      );
       const spaceData = await spacesResponse.json();
       setSpaces(spaceData.spaces || []);
-  }
+    };
+    fetchSpaces();
+  }, [tokenState]);
 
   if (siteSettingsQuery.isLoading) {
     return <CardLoader />;
   }
 
+  if (tokenState !== TokenState.Valid) {
+    return (
+      <SiteConfigurationSurface>
+        <ProviderAuthCard />
+        <Card>
+          <CardTitle>Configuration for {sdk.extension.name}</CardTitle>
+          {tokenState === TokenState.NotSet && (
+            <p>Please authenticate with Codezero above to configure this extension.</p>
+          )}
+          {tokenState === TokenState.Invalid && (
+            <p>Your authentication token is invalid. Please re-authenticate above.</p>
+          )}
+          {tokenState === TokenState.Expired && (
+            <p>
+              Your authentication token has expired. Please re-authenticate above.
+            </p>
+          )}
+        </Card>
+      </SiteConfigurationSurface>
+    );
+  }
   return (
     <SiteConfigurationSurface>
+      <ProviderAuthCard />
       <Card>
         <CardTitle>Configuration for {sdk.extension.name}</CardTitle>
-        <p></p>
+        <p>Please select the connection target for this extension.</p>
         <Form
           defaultValues={{
-            ...siteSettingsQuery.data ?? {
-              orgID: undefined, 
-              orgAPIKey: undefined, 
-              spaceID : undefined,
-            },
+            ...(siteSettingsQuery.data ?? {
+              orgID: undefined,
+              orgAPIKey: undefined,
+              spaceID: undefined,
+            }),
           }}
           schema={SiteSettingsSchema}
           onSubmit={siteSettingsMutation.mutateAsync}
         >
-          {({ context: { watch } }) => {
-            const orgID = watch('orgID')
-            const orgAPIKey = watch('orgAPIKey')
+          <Select
+            label="Select Organization"
+            name="orgID"
+            options={orgs.map((org) => ({
+              label: org.name,
+              value: org.id,
+            }))}
+          />
+          
+          { siteSettingsQuery.data?.orgID && 
+            <>
+              <FormFieldSecret name="orgAPIKey" label="Organization API Key" />
+              <Select
+                label="Select Space"
+                name="spaceID"
+                options={spaces.map((space) => ({
+                  label: space.name,
+                  value: space.id,
+                }))}
+              />
+            </>
+          }
 
-            const prevValues = useRef<{
-              orgID: string
-              orgAPIKey: string
-            } | null>(null)
-
-            useEffect(() => {
-              // Initialize prevValues only once, after the query is loaded
-              if (!prevValues.current && siteSettingsQuery.data) {
-                prevValues.current = {
-                  ...siteSettingsQuery.data
-                };
-
-                if (prevValues.current.orgID && prevValues.current.orgAPIKey)
-                  fetchSpaces(orgID, orgAPIKey)
-              }
-            }, [siteSettingsQuery.data]);
-
-            useEffect(() => {
-              if (prevValues.current?.orgID !== orgID || 
-                  prevValues.current?.orgAPIKey !== orgAPIKey) {
-                fetchSpaces(orgID, orgAPIKey)
-              }
-
-              prevValues.current = { orgID, orgAPIKey }
-            }, [orgID, orgAPIKey]);
-
-            return (
-              <>
-                <p>You can obtain the Organization ID and API Key from the API Keys menu in the <a href={hubURL} target="_blank">Codezero Hub</a></p>
-                <FormField
-                  name="orgID"
-                  type="text"
-                  label="Organization ID"
-                />
-                <FormFieldSecret
-                  name="orgAPIKey"
-                  label="Organization API Key"
-                />
-
-                {spaces.length > 0 && (
-                  <Select
-                    label="Select Space"
-                    name="spaceID"
-                    options={spaces.map(space => ({
-                      label: space.name,
-                      value: space.id
-                    }))}
-                  />
-                )}
-              </>
-            );
-          }}
         </Form>
       </Card>
     </SiteConfigurationSurface>
