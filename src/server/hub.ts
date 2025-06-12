@@ -1,1 +1,1 @@
-export const hubURL = 'https://hub.codezero.io'
+export const hubURL = 'https://staging.codezero.dev'

@@ -7,19 +7,21 @@ import {
   FormFieldSecret,
   SiteConfigurationSurface,
   Select,
+  ProviderAuthCard,
 } from "@netlify/sdk/ui/react/components";
 import { useNetlifySDK } from "@netlify/sdk/ui/react";
-import { hubURL } from '../../server/hub'
+import { hubURL } from "../../server/hub";
 import { trpc } from "../trpc";
 import { SiteSettingsSchema } from "../../schema/team-configuration";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 interface Space {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 export const SiteConfiguration = () => {
   const sdk = useNetlifySDK();
+  const { providerToken } = sdk.context.auth;
 
   const trpcUtils = trpc.useUtils();
   const [spaces, setSpaces] = useState<Space[]>([]);
@@ -30,18 +32,29 @@ export const SiteConfiguration = () => {
     },
   });
 
-  const fetchSpaces = async (orgID: string, orgAPIKey: string) => {
-      const spacesResponse = await fetch(`${hubURL}/api/c6o/connect/c6oapi.v1.C6OService/ListSpaces`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `${orgID}:${orgAPIKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}),
-      });
+  useEffect(() => {
+    if (!providerToken) {
+      setSpaces([]);
+      return;
+    }
+
+    const fetchSpaces = async () => {
+      const spacesResponse = await fetch(
+        `${hubURL}/api/admin/connect/hubadminapi.v1.HubAdminService/ListTeamspaces`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${providerToken}`,
+            "Content-Type": "application/json",
+          },
+          body: "{}",
+        }
+      );
       const spaceData = await spacesResponse.json();
       setSpaces(spaceData.spaces || []);
-  }
+    };
+    fetchSpaces();
+  }, [providerToken]);
 
   if (siteSettingsQuery.isLoading) {
     return <CardLoader />;
@@ -49,76 +62,41 @@ export const SiteConfiguration = () => {
 
   return (
     <SiteConfigurationSurface>
+      <ProviderAuthCard />
       <Card>
         <CardTitle>Configuration for {sdk.extension.name}</CardTitle>
         <p></p>
         <Form
           defaultValues={{
-            ...siteSettingsQuery.data ?? {
-              orgID: undefined, 
-              orgAPIKey: undefined, 
-              spaceID : undefined,
-            },
+            ...(siteSettingsQuery.data ?? {
+              orgID: undefined,
+              orgAPIKey: undefined,
+              spaceID: undefined,
+            }),
           }}
           schema={SiteSettingsSchema}
           onSubmit={siteSettingsMutation.mutateAsync}
         >
-          {({ context: { watch } }) => {
-            const orgID = watch('orgID')
-            const orgAPIKey = watch('orgAPIKey')
+          <p>
+            You can obtain the Organization ID and API Key from the API Keys
+            menu in the{" "}
+            <a href={hubURL} target="_blank">
+              Codezero Hub
+            </a>
+          </p>
+          <FormField name="orgID" type="text" label="Organization ID" />
+          <FormFieldSecret name="orgAPIKey" label="Organization API Key" />
 
-            const prevValues = useRef<{
-              orgID: string
-              orgAPIKey: string
-            } | null>(null)
-
-            useEffect(() => {
-              // Initialize prevValues only once, after the query is loaded
-              if (!prevValues.current && siteSettingsQuery.data) {
-                prevValues.current = {
-                  ...siteSettingsQuery.data
-                };
-
-                if (prevValues.current.orgID && prevValues.current.orgAPIKey)
-                  fetchSpaces(orgID, orgAPIKey)
-              }
-            }, [siteSettingsQuery.data]);
-
-            useEffect(() => {
-              if (prevValues.current?.orgID !== orgID || 
-                  prevValues.current?.orgAPIKey !== orgAPIKey) {
-                fetchSpaces(orgID, orgAPIKey)
-              }
-
-              prevValues.current = { orgID, orgAPIKey }
-            }, [orgID, orgAPIKey]);
-
-            return (
-              <>
-                <p>You can obtain the Organization ID and API Key from the API Keys menu in the <a href={hubURL} target="_blank">Codezero Hub</a></p>
-                <FormField
-                  name="orgID"
-                  type="text"
-                  label="Organization ID"
-                />
-                <FormFieldSecret
-                  name="orgAPIKey"
-                  label="Organization API Key"
-                />
-
-                {spaces.length > 0 && (
-                  <Select
-                    label="Select Space"
-                    name="spaceID"
-                    options={spaces.map(space => ({
-                      label: space.name,
-                      value: space.id
-                    }))}
-                  />
-                )}
-              </>
-            );
-          }}
+          {spaces.length > 0 && (
+            <Select
+              label="Select Space"
+              name="spaceID"
+              options={spaces.map((space) => ({
+                label: space.name,
+                value: space.id,
+              }))}
+            />
+          )}
         </Form>
       </Card>
     </SiteConfigurationSurface>
